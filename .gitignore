@@ -1,3 +1,4 @@
 .env
-backups/
+backups/*.sql
+backups/*.sql.gz
 *.log
