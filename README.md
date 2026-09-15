@@ -1,8 +1,10 @@
 # Docker Linux Services Lab
 
+[![CI](https://github.com/lucasezekiel/docker-linux-services-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasezekiel/docker-linux-services-lab/actions/workflows/ci.yml)
+
 A hands-on Linux systems administration lab built with Docker Compose.
 
-The project deploys a PHP/Apache web service connected to a MariaDB database and demonstrates container networking, persistent storage, service health checks, database initialization, backup and recovery, and troubleshooting.
+The project deploys a PHP/Apache web service connected to a MariaDB database and demonstrates container networking, persistent storage, service health checks, database initialization, backup and recovery, continuous integration, and troubleshooting.
 
 ## Architecture
 
@@ -28,7 +30,7 @@ The web service communicates with MariaDB through an internal Docker network.
 
 Only the web service is published to the host on port `8080`.
 
-The database service is not exposed directly to the host.
+MariaDB has no published host port.
 
 ## Technologies
 
@@ -41,6 +43,7 @@ The database service is not exposed directly to the host.
 - SQL
 - Bash
 - Git
+- GitHub Actions
 - ShellCheck
 
 ## Features
@@ -56,6 +59,8 @@ The database service is not exposed directly to the host.
 - Bash backup automation
 - Bash restore automation
 - Shell scripts validated with ShellCheck
+- Continuous integration with GitHub Actions
+- Automated ShellCheck, Compose validation, and Docker image build
 - Tested container recreation and data persistence
 - Tested database backup and recovery
 
@@ -63,6 +68,9 @@ The database service is not exposed directly to the host.
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── app/
 │   ├── Dockerfile
 │   └── index.php
@@ -76,6 +84,7 @@ The database service is not exposed directly to the host.
 ├── .env.example
 ├── .gitignore
 ├── compose.yaml
+├── LICENSE
 └── README.md
 ```
 
@@ -264,6 +273,24 @@ shellcheck scripts/backup-db.sh scripts/restore-db.sh
 
 This helps detect common Bash scripting errors and portability issues.
 
+## Continuous Integration
+
+GitHub Actions runs automatically on pushes and pull requests to `main`.
+
+The CI workflow performs:
+
+- ShellCheck validation of the Bash scripts
+- Docker Compose configuration validation
+- Docker image build verification
+
+The workflow is defined in:
+
+```text
+.github/workflows/ci.yml
+```
+
+This provides an automated check that the repository remains valid after changes.
+
 ## Health Check and Troubleshooting
 
 During the initial deployment, MariaDB was temporarily reported as unhealthy.
@@ -341,9 +368,9 @@ This lab follows several basic security practices:
 - credentials are stored in a local `.env` file;
 - `.env` is excluded from Git;
 - database backups are excluded from Git;
-- MariaDB is not published directly to the host;
+- MariaDB has no published host port;
 - the web application uses a dedicated database user;
-- the Docker network isolates communication between services.
+- application services communicate through a dedicated Docker network.
 
 For a production environment, additional measures would be required, including secret management, TLS, restricted privileges, backup encryption, access control, monitoring, and regular updates.
 
@@ -360,9 +387,16 @@ This project was created to demonstrate practical skills related to:
 - SQL database administration
 - backup and recovery
 - Bash automation
+- continuous integration
 - log analysis
 - troubleshooting
 - Git version control
+
+## License
+
+This project is licensed under the MIT License.
+
+See the `LICENSE` file for details.
 
 ## Project Status
 
