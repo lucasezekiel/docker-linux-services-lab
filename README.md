@@ -1,57 +1,63 @@
 # Docker Linux Services Lab
 
-A small hands-on systems administration lab built with Docker Compose.
+A hands-on Linux systems administration lab built with Docker Compose.
 
-The project deploys an Apache/PHP web service connected to a MariaDB database and demonstrates container networking, persistent storage, service health checks, database initialization, backup and recovery, and basic troubleshooting.
+The project deploys a PHP/Apache web service connected to a MariaDB database and demonstrates container networking, persistent storage, service health checks, database initialization, backup and recovery, and troubleshooting.
 
 ## Architecture
 
 ```text
-CachyOS Linux Host
-        |
-        v
-   Docker Compose
-        |
-        +---------------------+
-        |                     |
-        v                     v
-  Apache + PHP             MariaDB
-     web                     db
-        |                     |
-        +---- Docker network--+
-                              |
-                              v
-                     Persistent volume
+GNU/Linux Host
+      |
+      v
+Docker Compose
+      |
+      +-------------------------+
+      |                         |
+      v                         v
+ Web Service                Database
+ Apache + PHP               MariaDB
+      |                         |
+      +------ labnet -----------+
+                                |
+                                v
+                     Persistent Docker Volume
 ```
 
-The web container communicates with MariaDB using the internal Docker network. The database is not exposed directly to the host.
+The web service communicates with MariaDB through an internal Docker network.
+
+Only the web service is published to the host on port `8080`.
+
+The database service is not exposed directly to the host.
 
 ## Technologies
 
 - GNU/Linux
-- Docker
+- Docker Engine
 - Docker Compose
-- Apache
+- Apache HTTP Server
 - PHP
 - MariaDB
-- Bash
 - SQL
+- Bash
 - Git
 - ShellCheck
 
 ## Features
 
-- Custom PHP/Apache Docker image
 - Multi-container deployment with Docker Compose
+- Custom PHP/Apache Docker image
 - Internal Docker network
-- Persistent MariaDB storage using a named volume
-- MariaDB health check
-- Automatic database initialization
+- Persistent MariaDB storage
+- Automatic SQL database initialization
+- MariaDB health monitoring
+- Service dependency based on database health
 - Environment-based configuration
-- Database backup automation with Bash
-- Database restore automation with Bash
+- Bash backup automation
+- Bash restore automation
 - Shell scripts validated with ShellCheck
-- Functional persistence and recovery tests
+- Tested container recreation and data persistence
+- Tested database backup and recovery
 
 ## Project Structure
 
@@ -73,11 +79,13 @@ The web container communicates with MariaDB using the internal Docker network. T
 └── README.md
 ```
 
+Backup files and the local `.env` file are intentionally excluded from version control.
+
 ## Requirements
 
-Docker and Docker Compose must be installed and running.
+Docker Engine and Docker Compose are required.
 
-Check the installation with:
+Verify the installation:
 
 ```bash
 docker --version
@@ -87,15 +95,17 @@ docker info
 
 ## Configuration
 
-Create the local environment file from the provided example:
+Create a local environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-The `.env` file contains local database credentials and is intentionally excluded from Git.
+Edit `.env` and define the database credentials.
 
-## Running the Lab
+The local `.env` file is ignored by Git and should not be committed.
+
+## Start the Lab
 
 Validate the Compose configuration:
 
@@ -115,24 +125,44 @@ Check their status:
 docker compose ps
 ```
 
-Test the web service:
+The MariaDB service should eventually report:
+
+```text
+healthy
+```
+
+## Test the Application
+
+Query the web service:
 
 ```bash
 curl http://localhost:8080
 ```
 
-Expected output:
+Example output:
 
 ```text
 Docker Linux Services Lab
 =========================
 Web service: OK
 Database connection: OK
+
+Database message: Persistent storage is working
 ```
+
+This confirms that:
+
+- the web container is running;
+- PHP is working;
+- Docker DNS resolves the `db` service;
+- the web container can connect to MariaDB;
+- the initialization data is available.
 
 ## Persistent Storage Test
 
-A second database record was manually inserted and the containers were then removed:
+A second record was inserted manually into MariaDB.
+
+The containers were then removed:
 
 ```bash
 docker compose down
@@ -144,66 +174,101 @@ The services were recreated:
 docker compose up -d
 ```
 
-The database record remained available because MariaDB stores its data in a named Docker volume.
+The record remained available.
 
-This demonstrates that container lifecycle and data lifecycle are independent.
+This demonstrates that the database lifecycle is independent from the container lifecycle because MariaDB stores its data in a named Docker volume.
 
 The volume can be inspected with:
 
 ```bash
 docker volume ls
-docker volume inspect docker-linux-services-lab_db_data
 ```
+
+Important:
+
+```bash
+docker compose down
+```
+
+removes the containers but preserves the volume.
+
+However:
+
+```bash
+docker compose down -v
+```
+
+also removes the persistent volume and therefore destroys the database data.
 
 ## Database Backup
 
-Create a database dump with:
+Create a SQL backup with:
 
 ```bash
 ./scripts/backup-db.sh
 ```
 
-Backups are stored locally under:
+The script:
+
+1. loads the local database configuration;
+2. executes `mariadb-dump` inside the database container;
+3. creates a timestamped SQL dump;
+4. stores it under `backups/`.
+
+Example:
 
 ```text
-backups/
+backups/labdb_2026-09-14_03-13-58.sql
 ```
 
-SQL dump files are excluded from Git.
+SQL backup files are excluded from Git.
 
-## Database Recovery
+## Database Restore
 
-Restore a database dump with:
+Restore a backup with:
 
 ```bash
 ./scripts/restore-db.sh backups/<backup-file>.sql
 ```
 
-The recovery procedure was tested by:
+The recovery procedure was tested by deliberately deleting all records from the demonstration table.
 
 ```text
-creating a valid backup
-        |
-        v
-deleting all rows from the test table
-        |
-        v
-verifying the data loss
-        |
-        v
-restoring the SQL dump
-        |
-        v
-verifying the recovered data
+Working database
+       |
+       v
+SQL backup created
+       |
+       v
+Records deleted
+       |
+       v
+Data loss verified
+       |
+       v
+SQL backup restored
+       |
+       v
+Data recovered
 ```
 
-Both direct SQL queries and the PHP application confirmed successful recovery.
+The recovery was verified both with direct SQL queries and through the PHP application.
 
-## Troubleshooting
+## Shell Script Validation
 
-During the first deployment, MariaDB required additional time to initialize its database files before becoming healthy.
+The backup and restore scripts were checked using ShellCheck:
 
-The issue was investigated using:
+```bash
+shellcheck scripts/backup-db.sh scripts/restore-db.sh
+```
+
+This helps detect common Bash scripting errors and portability issues.
+
+## Health Check and Troubleshooting
+
+During the initial deployment, MariaDB was temporarily reported as unhealthy.
+
+The problem was investigated with:
 
 ```bash
 docker compose ps
@@ -211,55 +276,96 @@ docker compose logs db
 docker inspect sysadmin-lab-db
 ```
 
-The logs confirmed that MariaDB successfully initialized the database, created the application user, executed the initialization script, and eventually reported itself ready for connections.
+The logs showed that MariaDB was still performing its first-time database initialization.
 
-This demonstrated the importance of distinguishing between a container that is running and a service that is actually ready to accept requests.
+The initialization process took longer than the original health-check retry window.
+
+A startup grace period was therefore added:
+
+```yaml
+start_period: 90s
+```
+
+This allows MariaDB enough time to initialize before failed health checks are counted.
+
+This troubleshooting exercise demonstrated an important distinction:
+
+```text
+Container running != Application ready
+```
+
+A container may be running while the service inside it is still initializing.
 
 ## Useful Commands
 
-Check running services:
+Check service status:
 
 ```bash
 docker compose ps
 ```
 
-View logs:
+View all logs:
 
 ```bash
 docker compose logs
+```
+
+View database logs:
+
+```bash
 docker compose logs db
+```
+
+View web logs:
+
+```bash
 docker compose logs web
 ```
 
-Stop and remove containers while preserving the database volume:
+Restart the services:
+
+```bash
+docker compose restart
+```
+
+Stop the lab while preserving data:
 
 ```bash
 docker compose down
 ```
 
-Remove containers **and the persistent volume**:
+## Security Considerations
 
-```bash
-docker compose down -v
-```
+This lab follows several basic security practices:
 
-> Warning: using `-v` removes the database volume and its stored data.
+- credentials are stored in a local `.env` file;
+- `.env` is excluded from Git;
+- database backups are excluded from Git;
+- MariaDB is not published directly to the host;
+- the web application uses a dedicated database user;
+- the Docker network isolates communication between services.
+
+For a production environment, additional measures would be required, including secret management, TLS, restricted privileges, backup encryption, access control, monitoring, and regular updates.
 
 ## Learning Objectives
 
-This lab was created to practice concepts related to Linux systems administration and infrastructure:
+This project was created to demonstrate practical skills related to:
 
-- containerized service deployment
-- service dependencies and health monitoring
-- Docker networking
+- Linux systems administration
+- Docker container management
+- Docker Compose
+- service networking
 - persistent storage
-- SQL database initialization
-- backup and disaster recovery
+- health checks
+- SQL database administration
+- backup and recovery
 - Bash automation
 - log analysis
 - troubleshooting
-- Git-based project management
+- Git version control
 
-## Status
+## Project Status
 
-Lab completed and tested on a GNU/Linux host running Docker Engine and Docker Compose.
+Completed and tested in a GNU/Linux lab environment.
+
+The project is intended as a practical systems administration exercise rather than a production deployment.
