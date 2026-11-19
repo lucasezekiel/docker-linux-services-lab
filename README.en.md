@@ -1,3 +1,5 @@
+[🇪🇸 Español](README.md) | 🇬🇧 English
+
 # Docker Linux Services Lab
 
 [![CI](https://github.com/lucasezekiel/docker-linux-services-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasezekiel/docker-linux-services-lab/actions/workflows/ci.yml)
@@ -81,6 +83,10 @@ MariaDB has no published host port.
 ├── scripts/
 │   ├── backup-db.sh
 │   └── restore-db.sh
+├── tests/
+│   ├── compose.smoke.yaml
+│   └── smoke.sh
+├── evidencias/
 ├── .env.example
 ├── .gitignore
 ├── compose.yaml
@@ -220,9 +226,9 @@ Create a SQL backup with:
 The script:
 
 1. loads the local database configuration;
-2. executes `mariadb-dump` inside the database container;
-3. creates a timestamped SQL dump;
-4. stores it under `backups/`.
+2. executes `mariadb-dump` inside the database container, reading the root password from the container's environment so it never appears on a command line or in `ps` output;
+3. writes the dump to a hidden temporary file and publishes it only if it is not empty;
+4. stores it under `backups/` with owner-only permissions (`umask 077`).
 
 Example:
 
@@ -239,6 +245,8 @@ Restore a backup with:
 ```bash
 ./scripts/restore-db.sh backups/<backup-file>.sql
 ```
+
+The script asks you to type the database name before overwriting anything. For automation, pass `--yes`; without it, a non-interactive run is refused.
 
 The recovery procedure was tested by deliberately deleting all records from the demonstration table.
 
@@ -268,7 +276,7 @@ The recovery was verified both with direct SQL queries and through the PHP appli
 The backup and restore scripts were checked using ShellCheck:
 
 ```bash
-shellcheck scripts/backup-db.sh scripts/restore-db.sh
+shellcheck scripts/backup-db.sh scripts/restore-db.sh tests/smoke.sh
 ```
 
 This helps detect common Bash scripting errors and portability issues.
@@ -282,6 +290,7 @@ The CI workflow performs:
 - ShellCheck validation of the Bash scripts
 - Docker Compose configuration validation
 - Docker image build verification
+- An end-to-end smoke test (`tests/smoke.sh`) that runs the full backup and recovery cycle
 
 The workflow is defined in:
 
@@ -290,6 +299,27 @@ The workflow is defined in:
 ```
 
 This provides an automated check that the repository remains valid after changes.
+
+## End-to-end Smoke Test
+
+`tests/smoke.sh` starts an isolated copy of the stack (Compose project `dlsl-smoke`, its own containers and volume, port `127.0.0.1:18080`) and checks:
+
+1. the web service reaches the database;
+2. a marker row is inserted and included in a new backup;
+3. all rows are deleted (simulated data loss);
+4. a restore without `--yes` in non-interactive mode is refused;
+5. the restore brings the marker back, and the web app serves it;
+6. after `docker compose down` and `up`, the data is still there.
+
+```bash
+./tests/smoke.sh
+```
+
+The isolated copy and its volume are removed at the end, so a regular lab started with `docker compose up` is not touched. Set `KEEP_SMOKE=1` to keep it for inspection.
+
+## Evidence
+
+Screenshots and command output from real runs are in [`evidencias/`](evidencias/).
 
 ## Health Check and Troubleshooting
 
