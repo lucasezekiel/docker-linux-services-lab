@@ -1,0 +1,5 @@
+$ bash -c ./scripts/backup-db.sh && ls -l backups/*.sql
+Creating backup of database 'labdb'...
+Backup created successfully:
+<proyecto>/backups/labdb_2026-11-19_17-38-39.sql
+-rw------- 1 lucas docker 2271 nov 19 17:38 backups/labdb_2026-11-19_17-38-39.sql

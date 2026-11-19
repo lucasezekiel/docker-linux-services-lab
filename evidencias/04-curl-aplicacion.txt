@@ -1,0 +1,8 @@
+$ curl -s http://localhost:8080
+Docker Linux Services Lab
+=========================
+Web service: OK
+Database connection: OK
+
+Database message: Persistent storage is working
+Created at: 2026-11-19 20:36:55

@@ -319,7 +319,19 @@ The isolated copy and its volume are removed at the end, so a regular lab starte
 
 ## Evidence
 
-Screenshots and command output from real runs are in [`evidencias/`](evidencias/).
+Real run on 2026-11-19 on Debian 13 with Docker 26.1.5 and Compose 2.26.1:
+
+| Test | Result |
+|---|---|
+| ShellCheck + `compose config` | no warnings |
+| `tests/smoke.sh` | backup → loss → restore → persistence: **passes** |
+| Service state | MariaDB `healthy`; only the web service publishes a port |
+| Manual backup | `0600` file |
+| Restore | aborts on a wrong answer; restores after typing the database name |
+
+![Smoke test](evidencias/02-smoke-test.png)
+
+📸 All screenshots and output in [`evidencias/`](evidencias/README.md) (Spanish).
 
 ## Health Check and Troubleshooting
 

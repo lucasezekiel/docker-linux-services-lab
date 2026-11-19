@@ -1,0 +1,8 @@
+$ bash -c docker compose ps; echo; docker port sysadmin-lab-web; echo "db publica puertos: $(docker port sysadmin-lab-db | wc -l)"
+NAME               IMAGE                    COMMAND                  SERVICE   CREATED              STATUS                        PORTS
+sysadmin-lab-db    mariadb:11               "docker-entrypoint.s…"   db        About a minute ago   Up About a minute (healthy)   3306/tcp
+sysadmin-lab-web   docs-es-evidencias-web   "docker-php-entrypoi…"   web       About a minute ago   Up Less than a second         0.0.0.0:8080->80/tcp, :::8080->80/tcp
+
+80/tcp -> 0.0.0.0:8080
+80/tcp -> [::]:8080
+db publica puertos: 0

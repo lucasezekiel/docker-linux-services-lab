@@ -1,0 +1,17 @@
+$ bash -c echo "# Respuesta incorrecta: se cancela"; printf "otra\n" | script -qec "./scripts/restore-db.sh backups/labdb_2026-11-19_17-38-39.sql" /dev/null; echo; echo "# Respuesta correcta (labdb): se restaura"; printf "labdb\n" | script -qec "./scripts/restore-db.sh backups/labdb_2026-11-19_17-38-39.sql" /dev/null; echo; curl -s http://localhost:8080 | grep Database
+# Respuesta incorrecta: se cancela
+otra
+This replaces the tables in 'labdb' with the contents of:
+  <proyecto>/backups/labdb_2026-11-19_17-38-39.sql
+Type the database name to continue: Aborted; nothing was changed.
+
+# Respuesta correcta (labdb): se restaura
+labdb
+This replaces the tables in 'labdb' with the contents of:
+  <proyecto>/backups/labdb_2026-11-19_17-38-39.sql
+Type the database name to continue: Restoring database 'labdb' from:
+<proyecto>/backups/labdb_2026-11-19_17-38-39.sql
+Database restored successfully.
+
+Database connection: OK
+Database message: Persistent storage is working

@@ -201,7 +201,19 @@ GitHub Actions corre en cada push y pull request a `main`:
 
 ## Evidencias
 
-Las capturas y salidas de ejecuciones reales están en [`evidencias/`](evidencias/).
+Ejecución real del 2026-11-19 en Debian 13 con Docker 26.1.5 y Compose 2.26.1:
+
+| Prueba | Resultado |
+|---|---|
+| ShellCheck + `compose config` | sin advertencias |
+| `tests/smoke.sh` | backup → pérdida → restauración → persistencia: **pasa** |
+| Estado de servicios | MariaDB `healthy`; solo la web publica un puerto |
+| Backup manual | archivo `0600` |
+| Restauración | se cancela con respuesta incorrecta; restaura con el nombre de la base |
+
+![Prueba de humo](evidencias/02-smoke-test.png)
+
+📸 Todas las capturas y salidas en [`evidencias/`](evidencias/README.md).
 
 ## Health check y troubleshooting
 
