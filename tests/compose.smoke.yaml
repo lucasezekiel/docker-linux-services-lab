@@ -1,0 +1,10 @@
+# Override used only by tests/smoke.sh.
+# Distinct container names and host port keep the smoke test away from a
+# regular lab started with `docker compose up`.
+services:
+  db:
+    container_name: dlsl-smoke-db
+  web:
+    container_name: dlsl-smoke-web
+    ports: !override
+      - "127.0.0.1:18080:80"

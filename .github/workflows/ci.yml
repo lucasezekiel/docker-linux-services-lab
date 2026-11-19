@@ -29,10 +29,22 @@ jobs:
           sudo apt-get install -y shellcheck
 
       - name: Validate Bash scripts
-        run: shellcheck scripts/backup-db.sh scripts/restore-db.sh
+        run: shellcheck scripts/backup-db.sh scripts/restore-db.sh tests/smoke.sh
 
       - name: Validate Docker Compose configuration
         run: docker compose config -q
 
       - name: Build web image
         run: docker compose build web
+
+  smoke:
+    name: End-to-end smoke test
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Start lab, back up, lose data, restore and verify
+        run: ./tests/smoke.sh
